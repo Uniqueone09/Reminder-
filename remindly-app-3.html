@@ -1,0 +1,2157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Remindly — Smart Reminder App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F0EFFE;
+    --surface: #ffffff;
+    --surface2: #F7F6FF;
+    --border: rgba(120,100,220,0.12);
+    --text: #1A1530;
+    --text2: #6B6487;
+    --text3: #A89FC4;
+    --accent: #6C5CE7;
+    --accent2: #A29BFE;
+    --accent3: #FDCB6E;
+    --accent4: #00CEC9;
+    --accent5: #FF7675;
+    --high: #FF6B6B;
+    --med: #FDCB6E;
+    --low: #00CEC9;
+    --shadow: 0 4px 32px rgba(108,92,231,0.10);
+    --shadow2: 0 2px 12px rgba(108,92,231,0.08);
+    --radius: 22px;
+    --radius-sm: 14px;
+    --radius-xs: 9px;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --transition: all 0.28s cubic-bezier(0.34,1.2,0.64,1);
+  }
+  [data-theme="dark"] {
+    --bg: #11101C;
+    --surface: #1C1B2E;
+    --surface2: #232238;
+    --border: rgba(162,155,254,0.12);
+    --text: #EDE9FF;
+    --text2: #9B95BB;
+    --text3: #5A5375;
+    --shadow: 0 4px 32px rgba(0,0,0,0.35);
+    --shadow2: 0 2px 12px rgba(0,0,0,0.22);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    background: var(--bg);
+    font-family: var(--font-body);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.4s, color 0.4s;
+    overflow: hidden;
+  }
+
+  /* Phone Shell */
+  .app-shell {
+    width: 390px;
+    height: 844px;
+    background: var(--surface);
+    border-radius: 44px;
+    box-shadow: 0 32px 80px rgba(108,92,231,0.22), 0 2px 0 rgba(255,255,255,0.7) inset;
+    position: relative;
+    overflow: hidden;
+    border: 1.5px solid var(--border);
+    transition: background 0.4s;
+  }
+  /* notch removed */
+
+  /* Screen System */
+  .screen {
+    position: absolute; inset: 0;
+    padding: 0;
+    overflow: hidden;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s cubic-bezier(0.4,0,0.2,1), transform 0.35s cubic-bezier(0.4,0,0.2,1);
+    transform: translateX(40px);
+    display: flex; flex-direction: column;
+  }
+  .screen.active {
+    opacity: 1; pointer-events: all; transform: translateX(0);
+  }
+  .screen.exit { opacity: 0; transform: translateX(-40px); }
+
+  /* ─── SCREEN 1: SPLASH ─── */
+  #splash {
+    background: linear-gradient(145deg, #6C5CE7 0%, #A29BFE 55%, #FDCB6E 100%);
+    align-items: center; justify-content: center; gap: 24px;
+  }
+  .splash-logo {
+    width: 90px; height: 90px;
+    background: rgba(255,255,255,0.22);
+    border-radius: 28px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 44px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    backdrop-filter: blur(8px);
+    animation: logoFloat 3s ease-in-out infinite;
+  }
+  @keyframes logoFloat {
+    0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-10px) rotate(2deg)}
+  }
+  .splash-title {
+    font-family: var(--font-display); font-size: 40px; font-weight: 800;
+    color: #fff; letter-spacing: -1px;
+  }
+  .splash-sub { color: rgba(255,255,255,0.75); font-size: 15px; }
+  .splash-dots { display: flex; gap: 7px; margin-top: 32px; }
+  .splash-dots span {
+    width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.4);
+    animation: dotPulse 1.4s ease-in-out infinite;
+  }
+  .splash-dots span:nth-child(2){animation-delay:.2s}
+  .splash-dots span:nth-child(3){animation-delay:.4s}
+  @keyframes dotPulse {0%,80%,100%{transform:scale(1);opacity:.4}40%{transform:scale(1.3);opacity:1}}
+
+  /* ─── SCREEN 2: LOGIN ─── */
+  #login { background: var(--bg); }
+  .login-hero {
+    height: 220px;
+    background: linear-gradient(145deg, #6C5CE7 0%, #A29BFE 100%);
+    position: relative; overflow: hidden;
+    border-radius: 0 0 44px 44px;
+    display: flex; align-items: flex-end; padding: 28px 28px 32px;
+    flex-shrink: 0;
+  }
+  .login-hero::before {
+    content:''; position:absolute; top:-40px; right:-40px;
+    width:180px; height:180px; border-radius:50%;
+    background: rgba(255,255,255,0.10);
+  }
+  .login-hero-text h2 {
+    font-family: var(--font-display); font-size: 30px; font-weight: 800; color: #fff;
+    line-height: 1.1;
+  }
+  .login-hero-text p { color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 6px; }
+  .login-body { padding: 28px 24px; display: flex; flex-direction: column; gap: 16px; flex: 1; }
+  .input-group { display: flex; flex-direction: column; gap: 6px; }
+  .input-group label { font-size: 12px; font-weight: 600; color: var(--text2); letter-spacing: .5px; text-transform: uppercase; }
+  .input-wrap {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border-radius: var(--radius-sm);
+    padding: 14px 16px; border: 1.5px solid var(--border);
+    box-shadow: var(--shadow2); transition: border-color 0.2s;
+  }
+  .input-wrap:focus-within { border-color: var(--accent); }
+  .input-wrap span { font-size: 18px; }
+  .input-wrap input {
+    flex: 1; border: none; outline: none; background: transparent;
+    font-family: var(--font-body); font-size: 15px; color: var(--text);
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #6C5CE7, #A29BFE);
+    color: #fff; border: none; border-radius: var(--radius-sm);
+    padding: 16px; font-family: var(--font-display); font-size: 16px; font-weight: 700;
+    cursor: pointer; box-shadow: 0 6px 24px rgba(108,92,231,0.35);
+    transition: var(--transition); letter-spacing: .3px;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(108,92,231,0.45); }
+  .btn-primary:active { transform: translateY(0); }
+  .divider { display: flex; align-items: center; gap: 12px; color: var(--text3); font-size: 13px; }
+  .divider::before,.divider::after { content:''; flex:1; height:1px; background: var(--border); }
+  .social-row { display: flex; gap: 12px; }
+  .btn-social {
+    flex: 1; padding: 13px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border); background: var(--surface);
+    cursor: pointer; font-size: 20px; display: flex; align-items: center;
+    justify-content: center; gap: 8px; font-family: var(--font-body);
+    font-size: 13px; font-weight: 500; color: var(--text2);
+    transition: var(--transition);
+  }
+  .btn-social:hover { border-color: var(--accent2); background: var(--surface2); }
+  .login-footer { text-align: center; font-size: 13px; color: var(--text3); }
+  .login-footer a { color: var(--accent); font-weight: 600; cursor: pointer; }
+
+  /* ─── SHARED: BOTTOM NAV ─── */
+  .bottom-nav {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 80px; background: var(--surface);
+    border-top: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: space-around;
+    padding: 0 8px 16px;
+    backdrop-filter: blur(16px);
+    z-index: 50;
+    transition: background 0.4s;
+  }
+  .nav-item {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 4px; cursor: pointer; padding: 8px 18px;
+    border-radius: var(--radius-xs); transition: var(--transition);
+    position: relative;
+  }
+  .nav-item .nav-icon { font-size: 22px; transition: transform 0.25s; }
+  .nav-item .nav-label { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: .3px; transition: color 0.2s; }
+  .nav-item.active .nav-label { color: var(--accent); }
+  .nav-item.active .nav-icon { transform: scale(1.2); }
+  .nav-item.active::after {
+    content:''; position:absolute; bottom:-4px; left:50%; transform:translateX(-50%);
+    width:22px; height:3px; background: var(--accent); border-radius:2px;
+  }
+  .nav-fab {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(135deg, #6C5CE7, #A29BFE);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; color: #fff; cursor: pointer; margin-bottom: 12px;
+    box-shadow: 0 6px 20px rgba(108,92,231,0.4);
+    transition: var(--transition); border: none; line-height: 1;
+  }
+  .nav-fab:hover { transform: scale(1.1) rotate(45deg); }
+
+  /* ─── SCREEN 3: HOME ─── */
+  #home { background: var(--bg); }
+  .home-scroll { flex:1; overflow-y: auto; padding-bottom: 90px; scrollbar-width: none; }
+  .home-scroll::-webkit-scrollbar { display: none; }
+  .home-header {
+    padding: 52px 22px 18px;
+    background: var(--surface);
+    border-radius: 0 0 32px 32px;
+    margin-bottom: 4px;
+    box-shadow: var(--shadow2);
+  }
+  .home-header-row { display: flex; align-items: center; justify-content: space-between; }
+  .greeting { font-family: var(--font-display); font-size: 22px; font-weight: 700; }
+  .greeting span { color: var(--accent); }
+  .avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: linear-gradient(135deg, #6C5CE7, #FDCB6E);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; cursor: pointer; font-weight: 700; color: #fff;
+  }
+  .date-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--surface2); border-radius: 20px;
+    padding: 6px 12px; font-size: 12px; color: var(--text2);
+    margin-top: 8px; font-weight: 500;
+  }
+  /* AI Suggestion Banner */
+  .ai-banner {
+    margin: 14px 16px 0;
+    background: linear-gradient(135deg, rgba(108,92,231,0.12), rgba(162,155,254,0.08));
+    border: 1.5px solid rgba(108,92,231,0.18);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+    position: relative; overflow: hidden;
+  }
+  .ai-banner::before {
+    content:''; position:absolute; right:-20px; top:-20px;
+    width:100px; height:100px; border-radius:50%;
+    background: rgba(162,155,254,0.15);
+  }
+  .ai-badge {
+    width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
+    background: linear-gradient(135deg, #6C5CE7, #A29BFE);
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  .ai-text p:first-child { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: .5px; text-transform: uppercase; }
+  .ai-text p:last-child { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  /* Progress Strip */
+  .progress-strip {
+    margin: 14px 16px 0;
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow2);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .progress-ring { position: relative; width: 56px; height: 56px; flex-shrink: 0; }
+  .progress-ring svg { transform: rotate(-90deg); }
+  .progress-ring .track { stroke: var(--surface2); stroke-width: 5; fill: none; }
+  .progress-ring .fill { stroke: url(#pGrad); stroke-width: 5; fill: none; stroke-linecap: round;
+    stroke-dasharray: 157; stroke-dashoffset: 47; transition: stroke-dashoffset 1s ease; }
+  .ring-center {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  }
+  .progress-info p:first-child { font-weight: 600; font-size: 15px; }
+  .progress-info p:last-child { font-size: 12px; color: var(--text2); margin-top: 3px; }
+  .streak-badge {
+    margin-left: auto; background: linear-gradient(135deg, #FDCB6E, #e17055);
+    border-radius: 10px; padding: 6px 10px; text-align: center;
+    flex-shrink: 0;
+  }
+  .streak-badge span:first-child { display:block; font-size:18px; font-weight:800; font-family:var(--font-display); color:#fff; }
+  .streak-badge span:last-child { display:block; font-size:9px; color:rgba(255,255,255,0.8); font-weight:600; letter-spacing:.5px; }
+  /* Section Header */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 16px 10px;
+  }
+  .section-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
+  .section-link { font-size: 12px; color: var(--accent); font-weight: 600; cursor: pointer; }
+  /* Task Cards */
+  .task-card {
+    margin: 0 16px 10px;
+    background: var(--surface); border-radius: var(--radius);
+    padding: 16px; box-shadow: var(--shadow2);
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer; transition: var(--transition);
+    border: 1.5px solid transparent;
+    position: relative; overflow: hidden;
+  }
+  .task-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--border); }
+  .task-card.done { opacity: 0.55; }
+  .task-card.done .task-name { text-decoration: line-through; }
+  .priority-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    box-shadow: 0 0 0 3px currentColor;
+  }
+  .priority-dot.high { color: rgba(255,107,107,0.2); background: var(--high); }
+  .priority-dot.med { color: rgba(253,203,110,0.2); background: var(--med); }
+  .priority-dot.low { color: rgba(0,206,201,0.2); background: var(--low); }
+  .task-info { flex: 1; min-width: 0; }
+  .task-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .task-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .task-time { font-size: 11px; color: var(--text3); }
+  .task-tag {
+    font-size: 10px; padding: 2px 8px; border-radius: 20px;
+    background: var(--surface2); color: var(--text2); font-weight: 600;
+  }
+  .check-btn {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid var(--border); background: transparent;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; transition: var(--transition); flex-shrink: 0;
+  }
+  .task-card.done .check-btn { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .task-card-accent {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 22px 0 0 22px;
+  }
+  .task-card-accent.high { background: var(--high); }
+  .task-card-accent.med { background: var(--med); }
+  .task-card-accent.low { background: var(--low); }
+
+  /* ─── SCREEN 4: ADD TASK ─── */
+  #add { background: var(--bg); }
+  .modal-header {
+    padding: 52px 22px 20px;
+    background: var(--surface);
+    border-radius: 0 0 32px 32px;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 14px;
+    box-shadow: var(--shadow2);
+  }
+  .back-btn {
+    width: 38px; height: 38px; border-radius: 12px;
+    border: 1.5px solid var(--border); background: var(--surface2);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; transition: var(--transition); flex-shrink: 0;
+  }
+  .back-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .modal-title { font-family: var(--font-display); font-size: 20px; font-weight: 700; }
+  .add-scroll { flex:1; overflow-y:auto; padding: 16px; scrollbar-width:none; padding-bottom: 100px; }
+  .add-scroll::-webkit-scrollbar { display: none; }
+  .form-section { background: var(--surface); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; box-shadow: var(--shadow2); }
+  .form-section-label { font-size: 11px; font-weight: 700; color: var(--text3); letter-spacing: .8px; text-transform: uppercase; margin-bottom: 12px; }
+  .task-input {
+    width: 100%; border: none; outline: none; background: transparent;
+    font-family: var(--font-display); font-size: 22px; font-weight: 700;
+    color: var(--text); resize: none;
+  }
+  .task-input::placeholder { color: var(--text3); }
+  .priority-row { display: flex; gap: 10px; margin-top: 0; }
+  .priority-pill {
+    flex: 1; padding: 11px 8px; border-radius: var(--radius-sm);
+    border: 2px solid var(--border); background: var(--surface2);
+    cursor: pointer; text-align: center; font-size: 12px; font-weight: 700;
+    transition: var(--transition); font-family: var(--font-display);
+  }
+  .priority-pill.active.high { background: rgba(255,107,107,0.12); border-color: var(--high); color: var(--high); }
+  .priority-pill.active.med { background: rgba(253,203,110,0.12); border-color: var(--med); color: #c4960a; }
+  .priority-pill.active.low { background: rgba(0,206,201,0.12); border-color: var(--low); color: var(--low); }
+  .time-row { display: flex; gap: 10px; }
+  .time-chip {
+    flex: 1; padding: 13px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border); background: var(--surface2);
+    cursor: pointer; display: flex; flex-direction: column; gap: 3px;
+    transition: var(--transition);
+  }
+  .time-chip:hover { border-color: var(--accent); }
+  .time-chip span:first-child { font-size: 10px; font-weight: 700; color: var(--text3); letter-spacing: .5px; }
+  .time-chip span:last-child { font-size: 14px; font-weight: 600; }
+  .repeat-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .repeat-chip {
+    padding: 7px 13px; border-radius: 20px;
+    border: 1.5px solid var(--border); background: var(--surface2);
+    cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text2);
+    transition: var(--transition);
+  }
+  .repeat-chip.active { background: rgba(108,92,231,0.12); border-color: var(--accent); color: var(--accent); }
+  .notif-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; }
+  .notif-label { font-size: 14px; font-weight: 500; }
+  .notif-sub { font-size: 11px; color: var(--text3); }
+  .toggle {
+    width: 46px; height: 26px; border-radius: 13px;
+    background: var(--surface2); border: 2px solid var(--border);
+    cursor: pointer; position: relative; transition: background 0.3s;
+  }
+  .toggle.on { background: var(--accent); border-color: var(--accent); }
+  .toggle::after {
+    content:''; position:absolute; top:2px; left:2px;
+    width:18px; height:18px; border-radius:50%; background:#fff;
+    transition: transform 0.3s; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .toggle.on::after { transform: translateX(20px); }
+  .voice-btn {
+    width: 100%; padding: 14px; border-radius: var(--radius-sm);
+    border: 2px dashed var(--accent2); background: rgba(108,92,231,0.06);
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+    font-family: var(--font-body); font-size: 14px; font-weight: 600; color: var(--accent);
+    transition: var(--transition);
+  }
+  .voice-btn:hover { background: rgba(108,92,231,0.12); }
+  .voice-btn.listening {
+    animation: voicePulse 1.2s ease-in-out infinite;
+    border-color: var(--accent);
+    background: rgba(108,92,231,0.1);
+  }
+  @keyframes voicePulse { 0%,100%{box-shadow:0 0 0 0 rgba(108,92,231,0.3)} 50%{box-shadow:0 0 0 12px rgba(108,92,231,0)} }
+  .add-task-btn {
+    position: absolute; bottom: 88px; left: 16px; right: 16px;
+    padding: 16px; border-radius: var(--radius);
+    background: linear-gradient(135deg, #6C5CE7, #A29BFE);
+    color: #fff; border: none; font-family: var(--font-display);
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 8px 28px rgba(108,92,231,0.35);
+    transition: var(--transition);
+  }
+  .add-task-btn:hover { transform: translateY(-2px); }
+
+  /* ─── SCREEN 5: CALENDAR ─── */
+  #calendar { background: var(--bg); }
+  .cal-scroll { flex:1; overflow-y:auto; scrollbar-width:none; padding-bottom:90px; }
+  .cal-scroll::-webkit-scrollbar { display: none; }
+  .cal-header { padding: 52px 22px 20px; background: var(--surface); border-radius: 0 0 32px 32px; box-shadow: var(--shadow2); }
+  .cal-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+  .cal-month { font-family: var(--font-display); font-size: 20px; font-weight: 700; }
+  .cal-arrow { width:34px; height:34px; border-radius:10px; border:1.5px solid var(--border); background:var(--surface2); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:var(--transition); }
+  .cal-arrow:hover { background: var(--accent); color:#fff; border-color:var(--accent); }
+  .cal-week-labels { display:grid; grid-template-columns:repeat(7,1fr); text-align:center; margin-bottom:8px; }
+  .cal-week-labels span { font-size:10px; font-weight:700; color:var(--text3); letter-spacing:.5px; }
+  .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .cal-day {
+    aspect-ratio:1; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; cursor:pointer; font-size:14px;
+    font-weight:500; transition:var(--transition); position:relative;
+  }
+  .cal-day:hover { background: var(--surface2); }
+  .cal-day.other-month { color: var(--text3); }
+  .cal-day.today {
+    background: linear-gradient(135deg, #6C5CE7, #A29BFE);
+    color: #fff; font-weight: 700;
+  }
+  .cal-day.selected { background: var(--surface2); outline: 2px solid var(--accent); }
+  .cal-day .day-dot {
+    width: 5px; height: 5px; border-radius: 50%; background: var(--high);
+    position: absolute; bottom: 4px;
+  }
+  .view-toggle { display:flex; background:var(--surface2); border-radius:10px; padding:3px; margin:16px 16px 0; }
+  .view-btn { flex:1; padding:8px; border-radius:8px; text-align:center; cursor:pointer; font-size:13px; font-weight:600; color:var(--text2); transition:var(--transition); }
+  .view-btn.active { background:var(--surface); color:var(--accent); box-shadow:var(--shadow2); }
+  .day-schedule { padding: 14px 16px; }
+  .time-slot { display:flex; gap:14px; margin-bottom:14px; align-items:flex-start; }
+  .slot-time { font-size:11px; color:var(--text3); font-weight:600; width:36px; flex-shrink:0; padding-top:3px; }
+  .slot-line { width:2px; background:var(--border); border-radius:1px; flex-shrink:0; margin-top:8px; }
+  .slot-card {
+    flex:1; background:var(--surface); border-radius:var(--radius-sm);
+    padding:12px 14px; box-shadow:var(--shadow2);
+    border-left:3px solid var(--accent);
+  }
+  .slot-card.high { border-color: var(--high); }
+  .slot-card.med { border-color: var(--med); }
+  .slot-card .slot-name { font-size:13px; font-weight:600; }
+  .slot-card .slot-dur { font-size:11px; color:var(--text3); margin-top:3px; }
+
+  /* ─── SCREEN 6: TASK DETAIL ─── */
+  #detail { background: var(--bg); }
+  .detail-hero {
+    padding: 52px 22px 28px;
+    background: linear-gradient(145deg, #6C5CE7 0%, #A29BFE 100%);
+    border-radius: 0 0 44px 44px;
+    position: relative; overflow: hidden;
+  }
+  .detail-hero::before { content:''; position:absolute; right:-30px; bottom:-30px; width:150px; height:150px; border-radius:50%; background:rgba(255,255,255,0.1); }
+  .detail-hero::after { content:''; position:absolute; right:40px; top:30px; width:80px; height:80px; border-radius:50%; background:rgba(255,255,255,0.06); }
+  .detail-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+  .priority-badge { padding:5px 12px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; }
+  .priority-badge.high { background:rgba(255,107,107,0.2); color:#fff; }
+  .detail-title { font-family:var(--font-display); font-size:26px; font-weight:800; color:#fff; line-height:1.2; }
+  .detail-meta-row { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+  .detail-chip { background:rgba(255,255,255,0.15); border-radius:20px; padding:6px 12px; display:flex; align-items:center; gap:6px; font-size:12px; color:rgba(255,255,255,0.9); }
+  .detail-body { flex:1; overflow-y:auto; padding:20px 16px; scrollbar-width:none; padding-bottom:90px; }
+  .detail-body::-webkit-scrollbar { display:none; }
+  .detail-card { background:var(--surface); border-radius:var(--radius); padding:18px; margin-bottom:14px; box-shadow:var(--shadow2); }
+  .detail-card-title { font-size:11px; font-weight:700; color:var(--text3); letter-spacing:.8px; text-transform:uppercase; margin-bottom:12px; }
+  .detail-note { font-size:14px; color:var(--text2); line-height:1.6; }
+  .subtask-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+  .subtask-item:last-child { border-bottom:none; }
+  .sub-check { width:22px; height:22px; border-radius:7px; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:var(--transition); }
+  .sub-check.done { background:var(--accent); border-color:var(--accent); color:#fff; font-size:12px; }
+  .sub-text { font-size:14px; }
+  .sub-text.done { text-decoration:line-through; color:var(--text3); }
+  .attachment-row { display:flex; gap:10px; }
+  .attachment { width:72px; height:72px; border-radius:var(--radius-sm); background:var(--surface2); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; border:1.5px solid var(--border); font-size:24px; }
+  .attachment span:last-child { font-size:9px; color:var(--text3); font-weight:600; }
+  .complete-btn { width:100%; padding:16px; border-radius:var(--radius); background:linear-gradient(135deg,#00CEC9,#00b894); color:#fff; border:none; font-family:var(--font-display); font-size:16px; font-weight:700; cursor:pointer; box-shadow:0 8px 28px rgba(0,206,201,0.3); transition:var(--transition); }
+  .complete-btn:hover { transform:translateY(-2px); }
+
+  /* ─── SCREEN 7: PROGRESS ─── */
+  #progress-screen { background: var(--bg); }
+  .prog-scroll { flex:1; overflow-y:auto; scrollbar-width:none; padding-bottom:90px; }
+  .prog-scroll::-webkit-scrollbar { display:none; }
+  .prog-header { padding:52px 22px 22px; background:linear-gradient(145deg,#6C5CE7,#A29BFE); border-radius:0 0 44px 44px; }
+  .prog-title { font-family:var(--font-display); font-size:24px; font-weight:800; color:#fff; }
+  .prog-sub { color:rgba(255,255,255,0.7); font-size:14px; margin-top:4px; }
+  .prog-stats { display:flex; gap:10px; margin-top:18px; }
+  .prog-stat { flex:1; background:rgba(255,255,255,0.15); border-radius:var(--radius-sm); padding:14px 12px; text-align:center; }
+  .prog-stat .stat-num { font-family:var(--font-display); font-size:26px; font-weight:800; color:#fff; }
+  .prog-stat .stat-label { font-size:10px; color:rgba(255,255,255,0.7); font-weight:600; letter-spacing:.5px; margin-top:2px; }
+  .week-chart { margin:16px 16px 0; background:var(--surface); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow2); }
+  .week-chart-title { font-family:var(--font-display); font-size:15px; font-weight:700; margin-bottom:16px; }
+  .bar-row { display:flex; align-items:flex-end; gap:8px; height:80px; }
+  .bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end; }
+  .bar {
+    width:100%; border-radius:6px 6px 0 0;
+    background:linear-gradient(180deg,var(--accent),var(--accent2));
+    transition:height 1s cubic-bezier(0.34,1.2,0.64,1);
+    min-height:6px;
+  }
+  .bar.today { background:linear-gradient(180deg,#FDCB6E,#e17055); }
+  .bar-label { font-size:10px; color:var(--text3); font-weight:600; }
+  .badges-section { margin:14px 16px 0; }
+  .badges-title { font-family:var(--font-display); font-size:15px; font-weight:700; margin-bottom:12px; }
+  .badges-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .badge-item {
+    background:var(--surface); border-radius:var(--radius-sm); padding:14px 8px;
+    text-align:center; box-shadow:var(--shadow2); cursor:pointer; transition:var(--transition);
+  }
+  .badge-item:hover { transform:translateY(-3px); }
+  .badge-icon { font-size:28px; }
+  .badge-name { font-size:9px; color:var(--text3); font-weight:700; letter-spacing:.3px; margin-top:5px; }
+  .badge-item.locked { opacity:0.4; filter:grayscale(1); }
+  .goal-section { margin:14px 16px 0; background:var(--surface); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow2); }
+  .goal-item { margin-bottom:14px; }
+  .goal-item:last-child { margin-bottom:0; }
+  .goal-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .goal-label { font-size:13px; font-weight:600; }
+  .goal-val { font-size:12px; color:var(--text2); }
+  .goal-bar { height:8px; background:var(--surface2); border-radius:4px; overflow:hidden; }
+  .goal-fill { height:100%; border-radius:4px; transition:width 1s ease; }
+  .goal-fill.a { background:linear-gradient(90deg,#6C5CE7,#A29BFE); width:70%; }
+  .goal-fill.b { background:linear-gradient(90deg,#FDCB6E,#e17055); width:45%; }
+  .goal-fill.c { background:linear-gradient(90deg,#00CEC9,#00b894); width:88%; }
+
+  /* ─── SCREEN 8: SETTINGS ─── */
+  #settings { background: var(--bg); }
+  .set-scroll { flex:1; overflow-y:auto; scrollbar-width:none; padding-bottom:90px; }
+  .set-scroll::-webkit-scrollbar { display:none; }
+  .set-header { padding:52px 22px 22px; background:var(--surface); border-radius:0 0 32px 32px; box-shadow:var(--shadow2); }
+  .set-title { font-family:var(--font-display); font-size:24px; font-weight:800; }
+  .set-profile { display:flex; align-items:center; gap:14px; margin-top:16px; padding:14px; background:var(--surface2); border-radius:var(--radius-sm); }
+  .set-avatar { width:50px; height:50px; border-radius:16px; background:linear-gradient(135deg,#6C5CE7,#FDCB6E); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; color:#fff; }
+  .set-profile-info p:first-child { font-weight:700; font-size:15px; }
+  .set-profile-info p:last-child { font-size:12px; color:var(--text2); margin-top:2px; }
+  .set-group { margin:14px 16px 0; }
+  .set-group-label { font-size:11px; font-weight:700; color:var(--text3); letter-spacing:.8px; text-transform:uppercase; margin-bottom:8px; }
+  .set-card { background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow2); overflow:hidden; }
+  .set-item { display:flex; align-items:center; gap:14px; padding:15px 16px; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.2s; }
+  .set-item:last-child { border-bottom:none; }
+  .set-item:hover { background:var(--surface2); }
+  .set-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .set-item-info { flex:1; }
+  .set-item-info p:first-child { font-size:14px; font-weight:600; }
+  .set-item-info p:last-child { font-size:11px; color:var(--text3); margin-top:1px; }
+  .set-arrow { font-size:12px; color:var(--text3); }
+  /* Notification dot */
+  .notif-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--high);
+    position: absolute; top: 8px; right: 8px;
+  }
+
+  /* Utility */
+  .spacer { flex:1; }
+  .mt-8 { margin-top: 8px; }
+  .gap-10 { gap: 10px; }
+  
+  /* Splash auto-navigate */
+  .splash-cta {
+    margin-top: 16px;
+    padding: 14px 36px;
+    border-radius: var(--radius);
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.4);
+    color: #fff; cursor: pointer;
+    font-family: var(--font-display); font-size: 15px; font-weight: 700;
+    backdrop-filter: blur(8px);
+    transition: var(--transition);
+  }
+  .splash-cta:hover { background: rgba(255,255,255,0.3); }
+
+  /* Scrollable content padding top for screens without fixed header */
+  .padded-screen { padding-top: 52px; }
+  
+  /* Tooltip for AI */
+  .ai-time-suggest { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .ai-suggest-chip { padding:6px 12px; border-radius:20px; background:rgba(108,92,231,0.1); color:var(--accent); font-size:12px; font-weight:600; cursor:pointer; border:1.5px solid rgba(108,92,231,0.2); transition:var(--transition); }
+  .ai-suggest-chip:hover { background:rgba(108,92,231,0.18); }
+
+  /* ─── QUICK ADD BAR ─── */
+  .quick-add-bar {
+    margin: 0 16px 10px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow2);
+    border: 1.5px solid var(--border);
+    overflow: hidden;
+    transition: var(--transition);
+  }
+  .quick-add-input-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px;
+  }
+  .quick-add-input-row input {
+    flex: 1; border: none; outline: none; background: transparent;
+    font-family: var(--font-body); font-size: 14px; color: var(--text);
+  }
+  .quick-add-input-row input::placeholder { color: var(--text3); }
+  .quick-add-submit {
+    width: 32px; height: 32px; border-radius: 10px; border: none;
+    background: linear-gradient(135deg,#6C5CE7,#A29BFE);
+    color: #fff; font-size: 20px; line-height: 1;
+    cursor: pointer; flex-shrink: 0; display: flex;
+    align-items: center; justify-content: center;
+    transition: var(--transition);
+  }
+  .quick-add-submit:hover { transform: scale(1.1); }
+  .quick-add-options {
+    border-top: 1.5px solid var(--border);
+    padding: 12px 14px;
+    flex-direction: column; gap: 10px;
+    background: var(--surface2);
+  }
+  .quick-opt-row {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .quick-opt-label {
+    font-size: 11px; font-weight: 700; color: var(--text3);
+    letter-spacing: .5px; text-transform: uppercase; white-space: nowrap;
+  }
+  .quick-priority-row { display: flex; gap: 6px; }
+  .quick-p-chip {
+    padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    border: 1.5px solid var(--border); background: var(--surface);
+    cursor: pointer; transition: var(--transition); color: var(--text2);
+  }
+  .quick-p-chip.active.high { background:rgba(255,107,107,0.12); border-color:var(--high); color:var(--high); }
+  .quick-p-chip.active.med  { background:rgba(253,203,110,0.12); border-color:var(--med);  color:#c4960a; }
+  .quick-p-chip.active.low  { background:rgba(0,206,201,0.12);   border-color:var(--low);  color:var(--low); }
+  .quick-time-input {
+    border: 1.5px solid var(--border); border-radius: 8px;
+    background: var(--surface); padding: 5px 8px;
+    font-family: var(--font-body); font-size: 13px; font-weight: 600;
+    color: var(--text); outline: none; cursor: pointer;
+  }
+  .quick-tag-select {
+    border: 1.5px solid var(--border); border-radius: 8px;
+    background: var(--surface); padding: 5px 8px;
+    font-family: var(--font-body); font-size: 13px; font-weight: 600;
+    color: var(--text); outline: none; cursor: pointer; flex: 1;
+  }
+  .quick-action-row {
+    display: flex; gap: 8px; justify-content: flex-end; margin-top: 2px;
+  }
+  .quick-cancel {
+    padding: 8px 16px; border-radius: 10px; border: 1.5px solid var(--border);
+    background: var(--surface); color: var(--text2); font-family: var(--font-body);
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition);
+  }
+  .quick-cancel:hover { background: var(--surface2); }
+  .quick-save {
+    padding: 8px 18px; border-radius: 10px; border: none;
+    background: linear-gradient(135deg,#6C5CE7,#A29BFE);
+    color: #fff; font-family: var(--font-display);
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 4px 14px rgba(108,92,231,0.3);
+    transition: var(--transition);
+  }
+  .quick-save:hover { transform: translateY(-1px); }
+
+  /* ─── SCREEN 9: MONTHLY PROGRESS ─── */
+  #monthly { background: var(--bg); }
+  .monthly-scroll { flex:1; overflow-y:auto; scrollbar-width:none; padding-bottom:90px; }
+  .monthly-scroll::-webkit-scrollbar { display:none; }
+  .monthly-header {
+    padding: 36px 22px 24px;
+    background: linear-gradient(145deg, #6C5CE7 0%, #A29BFE 100%);
+    border-radius: 0 0 32px 32px;
+    box-shadow: var(--shadow);
+    position: relative; overflow: hidden;
+  }
+  .monthly-header::before {
+    content:''; position:absolute; right:-30px; top:-30px;
+    width:140px; height:140px; border-radius:50%;
+    background: rgba(255,255,255,0.10);
+  }
+  .monthly-header-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .monthly-title { font-family:var(--font-display); font-size:24px; font-weight:800; color:#fff; }
+  .monthly-sub { font-size:13px; color:rgba(255,255,255,0.7); margin-top:2px; }
+  .monthly-big-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:4px; }
+  .mstat { background:rgba(255,255,255,0.15); border-radius:var(--radius-sm); padding:12px 8px; text-align:center; backdrop-filter:blur(6px); }
+  .mstat-num { font-family:var(--font-display); font-size:22px; font-weight:800; color:#fff; }
+  .mstat-label { font-size:9px; color:rgba(255,255,255,0.75); font-weight:700; letter-spacing:.5px; margin-top:3px; }
+
+  .month-chart-section { margin:16px 16px 0; background:var(--surface); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow2); }
+  .month-chart-title { font-family:var(--font-display); font-size:15px; font-weight:700; margin-bottom:14px; }
+  .month-bar-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; align-items:flex-end; height:90px; }
+  .mbar-col { display:flex; flex-direction:column; align-items:center; gap:3px; height:100%; justify-content:flex-end; }
+  .mbar {
+    width:100%; border-radius:4px 4px 0 0;
+    background: linear-gradient(180deg,var(--accent),var(--accent2));
+    min-height:4px; transition:height 0.8s ease;
+  }
+  .mbar.highlight { background:linear-gradient(180deg,#FDCB6E,#e17055); }
+  .mbar-lbl { font-size:8px; color:var(--text3); font-weight:600; text-align:center; }
+
+  .month-heatmap { margin:14px 16px 0; background:var(--surface); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow2); }
+  .heatmap-title { font-family:var(--font-display); font-size:15px; font-weight:700; margin-bottom:12px; }
+  .heatmap-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
+  .heat-cell {
+    aspect-ratio:1; border-radius:5px; cursor:pointer;
+    transition: transform 0.15s;
+  }
+  .heat-cell:hover { transform:scale(1.2); }
+  .heat-0 { background:var(--surface2); }
+  .heat-1 { background:rgba(108,92,231,0.25); }
+  .heat-2 { background:rgba(108,92,231,0.50); }
+  .heat-3 { background:rgba(108,92,231,0.75); }
+  .heat-4 { background:var(--accent); }
+  .heatmap-legend { display:flex; align-items:center; gap:6px; margin-top:10px; justify-content:flex-end; font-size:10px; color:var(--text3); font-weight:600; }
+  .legend-cells { display:flex; gap:3px; }
+  .legend-cell { width:12px; height:12px; border-radius:3px; }
+
+  .month-category-section { margin:14px 16px 0; background:var(--surface); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow2); }
+  .mcat-row { display:flex; align-items:center; gap:12px; margin-bottom:13px; }
+  .mcat-row:last-child { margin-bottom:0; }
+  .mcat-icon { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+  .mcat-info { flex:1; }
+  .mcat-top { display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:5px; }
+  .mcat-val { font-size:12px; color:var(--text2); }
+  .mcat-bar { height:6px; background:var(--surface2); border-radius:3px; overflow:hidden; }
+  .mcat-fill { height:100%; border-radius:3px; }
+
+  .month-summary-card { margin:14px 16px 0; background:linear-gradient(135deg,rgba(108,92,231,0.1),rgba(162,155,254,0.06)); border:1.5px solid rgba(108,92,231,0.15); border-radius:var(--radius); padding:18px; }
+  .summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+  .summary-item { background:var(--surface); border-radius:var(--radius-sm); padding:12px; text-align:center; box-shadow:var(--shadow2); }
+  .summary-item-num { font-family:var(--font-display); font-size:20px; font-weight:800; color:var(--accent); }
+  .summary-item-label { font-size:10px; color:var(--text2); margin-top:3px; font-weight:600; letter-spacing:.3px; }
+
+
+    position: absolute; bottom: 100px; left: 16px; right: 16px;
+    background: var(--text); color: var(--surface);
+    border-radius: var(--radius-sm); padding: 14px 16px;
+    font-size: 14px; font-weight: 600; text-align: center;
+    opacity: 0; transform: translateY(20px);
+    transition: all 0.4s cubic-bezier(0.34,1.2,0.64,1);
+    z-index: 200; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="app-shell" id="app">
+  <!-- SCREEN 1: SPLASH -->
+  <div class="screen active" id="splash">
+    <div class="splash-logo">🔔</div>
+    <div class="splash-title">Remindly</div>
+    <div class="splash-sub">Smarter reminders, better days.</div>
+    <div class="splash-dots">
+      <span></span><span></span><span></span>
+    </div>
+    <button class="splash-cta" onclick="goTo('login')">Get Started →</button>
+  </div>
+
+  <!-- SCREEN 2: LOGIN -->
+  <div class="screen" id="login">
+    <div class="login-hero">
+      <div class="login-hero-text">
+        <h2>Welcome<br>back 👋</h2>
+        <p>Your tasks are waiting for you.</p>
+      </div>
+    </div>
+    <div class="login-body">
+      <div class="input-group">
+        <label>Your Name</label>
+        <div class="input-wrap">
+          <span>👤</span>
+          <input type="text" id="loginName" placeholder="e.g. Alex Johnson" autocomplete="name">
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Email</label>
+        <div class="input-wrap">
+          <span>📧</span>
+          <input type="email" placeholder="you@example.com" value="alex@email.com">
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <span>🔒</span>
+          <input type="password" placeholder="••••••••" value="password">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="doLogin()">Sign In</button>
+      <div class="divider">or continue with</div>
+      <div class="social-row">
+        <button class="btn-social">🍎 Apple</button>
+        <button class="btn-social">G Google</button>
+      </div>
+      <p class="login-footer">Don't have an account? <a onclick="goTo('home')">Sign up free</a></p>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: HOME -->
+  <div class="screen" id="home">
+    <div class="home-scroll">
+      <div class="home-header">
+        <div class="home-header-row">
+          <div>
+            <div style="font-size:12px;color:var(--text3);font-weight:600;letter-spacing:.5px;">GOOD MORNING</div>
+            <div class="greeting">Hey, <span>Alex</span> ✨</div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <div style="position:relative;cursor:pointer;" onclick="showToast('3 new notifications')">
+              <span style="font-size:22px;">🔔</span>
+              <div class="notif-dot"></div>
+            </div>
+            <div class="avatar" onclick="goTo('settings')">A</div>
+          </div>
+        </div>
+        <div class="date-chip">📅 Saturday, April 25, 2026</div>
+      </div>
+
+      <!-- AI Suggestion -->
+      <div class="ai-banner">
+        <div class="ai-badge">🤖</div>
+        <div class="ai-text">
+          <p>AI INSIGHT</p>
+          <p>You're most productive at 9am. 3 tasks scheduled!</p>
+        </div>
+      </div>
+
+      <!-- Progress Strip -->
+      <div class="progress-strip">
+        <div class="progress-ring">
+          <svg width="56" height="56" viewBox="0 0 56 56">
+            <defs>
+              <linearGradient id="pGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#6C5CE7"/>
+                <stop offset="100%" stop-color="#A29BFE"/>
+              </linearGradient>
+            </defs>
+            <circle class="track" cx="28" cy="28" r="24"/>
+            <circle class="fill" cx="28" cy="28" r="24"/>
+          </svg>
+          <div class="ring-center">70%</div>
+        </div>
+        <div class="progress-info">
+          <p>Today's Progress</p>
+          <p>7 of 10 tasks done</p>
+        </div>
+        <div class="streak-badge" onclick="goTo('progress-screen')" style="cursor:pointer;">
+          <span>🔥 14</span>
+          <span>DAY STREAK</span>
+        </div>
+      </div>
+
+      <!-- Today's Tasks -->
+      <div class="section-header">
+        <div class="section-title">Today's Tasks</div>
+        <div class="section-link" onclick="goTo('calendar')">See all</div>
+      </div>
+
+      <!-- Quick Add Bar -->
+      <div class="quick-add-bar" id="quickAddBar">
+        <div class="quick-add-input-row">
+          <span style="font-size:18px;flex-shrink:0;">✏️</span>
+          <input id="quickTaskInput" type="text" placeholder="Add a task quickly…" autocomplete="off"
+            onkeydown="if(event.key==='Enter')quickAddTask()"
+            onfocus="document.getElementById('quickAddOptions').style.display='flex'"
+          />
+          <button class="quick-add-submit" onclick="quickAddTask()">＋</button>
+        </div>
+        <div class="quick-add-options" id="quickAddOptions" style="display:none;">
+          <div class="quick-opt-row">
+            <div class="quick-opt-label">Priority</div>
+            <div class="quick-priority-row">
+              <div class="quick-p-chip active high" onclick="setQuickPriority(this,'high')">🔴 High</div>
+              <div class="quick-p-chip med"         onclick="setQuickPriority(this,'med')">🟡 Med</div>
+              <div class="quick-p-chip low"         onclick="setQuickPriority(this,'low')">🟢 Low</div>
+            </div>
+          </div>
+          <div class="quick-opt-row">
+            <div class="quick-opt-label">Time</div>
+            <input id="quickTaskTime" type="time" class="quick-time-input"/>
+            <div class="quick-opt-label" style="margin-left:8px;">Tag</div>
+            <select id="quickTaskTag" class="quick-tag-select">
+              <option value="Work">💼 Work</option>
+              <option value="Health">🏃 Health</option>
+              <option value="Personal">🏠 Personal</option>
+              <option value="Finance">💰 Finance</option>
+              <option value="Learning">📚 Learning</option>
+            </select>
+          </div>
+          <div class="quick-action-row">
+            <button class="quick-cancel" onclick="closeQuickAdd()">Cancel</button>
+            <button class="quick-save"   onclick="quickAddTask()">✨ Save Task</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="taskList"><!-- rendered by renderHome() --></div>
+
+      <div class="section-header" style="margin-top:4px;">
+        <div class="section-title">Upcoming</div>
+        <div class="section-link">Tomorrow →</div>
+      </div>
+
+      <div class="task-card">
+        <div class="task-card-accent med"></div>
+        <div class="priority-dot med"></div>
+        <div class="task-info">
+          <div class="task-name">Project Deadline — Phase 2</div>
+          <div class="task-meta">
+            <span class="task-time">📅 Apr 29</span>
+            <span class="task-tag">Work</span>
+          </div>
+        </div>
+        <button class="check-btn" onclick="toggleTask(this,event)"></button>
+      </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <nav class="bottom-nav">
+      <div class="nav-item active" onclick="navTo(this,'home')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">HOME</span>
+      </div>
+      <div class="nav-item" onclick="navTo(this,'calendar')">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">CALENDAR</span>
+      </div>
+      <button class="nav-fab" onclick="goTo('add')">＋</button>
+      <div class="nav-item" onclick="navTo(this,'progress-screen')">
+        <span class="nav-icon">🏆</span>
+        <span class="nav-label">REWARDS</span>
+      </div>
+      <div class="nav-item" onclick="navTo(this,'settings')">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">SETTINGS</span>
+      </div>
+    </nav>
+  </div>
+
+  <!-- SCREEN 4: ADD TASK -->
+  <div class="screen" id="add">
+    <div class="modal-header">
+      <button class="back-btn" onclick="goBack()">←</button>
+      <div class="modal-title">New Task</div>
+    </div>
+    <div class="add-scroll">
+      <div class="form-section">
+        <div class="form-section-label">Task Name</div>
+        <textarea id="newTaskName" class="task-input" rows="2" placeholder="What do you need to do?"></textarea>
+        <div style="border-top:1px solid var(--border);margin:12px 0;"></div>
+        <div class="form-section-label">AI-Suggested Times</div>
+        <div class="ai-time-suggest">
+          <div class="ai-suggest-chip" onclick="document.getElementById('newTaskTime').value='09:00';showToast('Time set to 9:00 AM')">⚡ 9:00 AM — Best focus</div>
+          <div class="ai-suggest-chip" onclick="document.getElementById('newTaskTime').value='14:00';showToast('Time set to 2:00 PM')">🌙 2:00 PM — Post-lunch</div>
+          <div class="ai-suggest-chip" onclick="document.getElementById('newTaskTime').value='18:00';showToast('Time set to 6:00 PM')">🌅 6:00 PM — Wind down</div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Priority</div>
+        <div class="priority-row">
+          <div class="priority-pill active high" onclick="setPriority(this,'high')">🔴 High</div>
+          <div class="priority-pill med" onclick="setPriority(this,'med')">🟡 Medium</div>
+          <div class="priority-pill low" onclick="setPriority(this,'low')">🟢 Low</div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Schedule</div>
+        <div class="time-row">
+          <div class="time-chip" style="flex:1.3;">
+            <span>DATE</span>
+            <span>Apr 28, 2026</span>
+          </div>
+          <div class="time-chip" style="flex:1.4;padding:10px 12px;">
+            <span>TIME</span>
+            <input id="newTaskTime" type="time" style="border:none;outline:none;background:transparent;font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--text);width:100%;" placeholder="--:--">
+          </div>
+        </div>
+        <div style="margin-top:12px;" class="form-section-label">Category</div>
+        <select id="newTaskTag" style="width:100%;padding:12px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);font-family:var(--font-body);font-size:14px;font-weight:600;color:var(--text);outline:none;cursor:pointer;">
+          <option value="Work">💼 Work</option>
+          <option value="Health">🏃 Health</option>
+          <option value="Personal">🏠 Personal</option>
+          <option value="Finance">💰 Finance</option>
+          <option value="Learning">📚 Learning</option>
+        </select>
+        <div style="margin-top:12px;" class="form-section-label">Repeat</div>
+        <div class="repeat-row">
+          <div class="repeat-chip active" onclick="setRepeat(this)">None</div>
+          <div class="repeat-chip" onclick="setRepeat(this)">Daily</div>
+          <div class="repeat-chip" onclick="setRepeat(this)">Weekly</div>
+          <div class="repeat-chip" onclick="setRepeat(this)">Monthly</div>
+          <div class="repeat-chip" onclick="setRepeat(this)">Custom</div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Notifications</div>
+        <div class="notif-row">
+          <div>
+            <div class="notif-label">Gentle Reminder</div>
+            <div class="notif-sub">Alert 15 min before task</div>
+          </div>
+          <div class="toggle on notif-toggle" onclick="toggleEl(this)"></div>
+        </div>
+        <div style="border-top:1px solid var(--border);margin:12px 0;"></div>
+        <div class="notif-row">
+          <div>
+            <div class="notif-label">Smart Repeat</div>
+            <div class="notif-sub">Re-alert if not completed</div>
+          </div>
+          <div class="toggle notif-toggle" onclick="toggleEl(this)"></div>
+        </div>
+        <div style="border-top:1px solid var(--border);margin:12px 0;"></div>
+        <div class="notif-row">
+          <div>
+            <div class="notif-label">Silent Mode</div>
+            <div class="notif-sub">No sound, banner only</div>
+          </div>
+          <div class="toggle notif-toggle" onclick="toggleEl(this)"></div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Voice Input</div>
+        <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">
+          🎙️ <span id="voiceBtnText">Tap to speak your task</span>
+        </button>
+      </div>
+    </div>
+    <button class="add-task-btn" onclick="saveTask()">✨ Save Task</button>
+  </div>
+
+  <!-- SCREEN 5: CALENDAR -->
+  <div class="screen" id="calendar">
+    <div class="cal-scroll">
+      <div class="cal-header">
+        <div class="cal-nav">
+          <div class="cal-arrow" onclick="showToast('Previous month')">‹</div>
+          <div class="cal-month">April 2026</div>
+          <div class="cal-arrow" onclick="showToast('Next month')">›</div>
+        </div>
+        <div class="cal-week-labels">
+          <span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+
+      <div class="view-toggle" style="margin:14px 16px 0;">
+        <div class="view-btn active" onclick="toggleView(this)">Day</div>
+        <div class="view-btn" onclick="toggleView(this)">Week</div>
+        <div class="view-btn" onclick="toggleView(this)">Month</div>
+      </div>
+
+      <div class="day-schedule">
+        <div class="section-title" style="margin-bottom:14px;">Saturday Schedule</div>
+        <div class="time-slot">
+          <div class="slot-time">7 AM</div>
+          <div class="slot-line" style="height:58px;"></div>
+          <div class="slot-card low" style="border-color:var(--low);">
+            <div class="slot-name">Morning Run 🏃</div>
+            <div class="slot-dur">45 min · Health</div>
+          </div>
+        </div>
+        <div class="time-slot">
+          <div class="slot-time">9 AM</div>
+          <div class="slot-line" style="height:58px;"></div>
+          <div class="slot-card high" onclick="goTo('detail')" style="cursor:pointer;">
+            <div class="slot-name">Team Standup 📞</div>
+            <div class="slot-dur">30 min · Work · HIGH</div>
+          </div>
+        </div>
+        <div class="time-slot">
+          <div class="slot-time">11 AM</div>
+          <div class="slot-line" style="height:58px;"></div>
+          <div class="slot-card med" style="border-color:var(--med);">
+            <div class="slot-name">Call Dr. Patel 🏥</div>
+            <div class="slot-dur">15 min · Personal</div>
+          </div>
+        </div>
+        <div class="time-slot">
+          <div class="slot-time">2 PM</div>
+          <div class="slot-line" style="height:58px;"></div>
+          <div class="slot-card">
+            <div class="slot-name">Review Q2 Report 📊</div>
+            <div class="slot-dur">1 hr · Work</div>
+          </div>
+        </div>
+        <div class="time-slot">
+          <div class="slot-time">5 PM</div>
+          <div class="slot-line" style="height:58px;"></div>
+          <div class="slot-card low" style="border-color:var(--low);">
+            <div class="slot-name">Grocery Shopping 🛒</div>
+            <div class="slot-dur">45 min · Personal</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="bottom-nav">
+      <div class="nav-item" onclick="navTo(this,'home')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">HOME</span>
+      </div>
+      <div class="nav-item active" onclick="navTo(this,'calendar')">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">CALENDAR</span>
+      </div>
+      <button class="nav-fab" onclick="goTo('add')">＋</button>
+      <div class="nav-item" onclick="navTo(this,'progress-screen')">
+        <span class="nav-icon">🏆</span>
+        <span class="nav-label">REWARDS</span>
+      </div>
+      <div class="nav-item" onclick="navTo(this,'settings')">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">SETTINGS</span>
+      </div>
+    </nav>
+  </div>
+
+  <!-- SCREEN 6: TASK DETAIL -->
+  <div class="screen" id="detail">
+    <div class="detail-hero">
+      <div class="detail-header">
+        <button class="back-btn" onclick="goBack()" style="background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.3);color:#fff;">←</button>
+        <div class="priority-badge high">🔴 High Priority</div>
+      </div>
+      <div class="detail-title">Team Standup Meeting</div>
+      <div class="detail-meta-row">
+        <div class="detail-chip">⏰ 9:00 AM</div>
+        <div class="detail-chip">⏱ 30 min</div>
+        <div class="detail-chip">🔁 Daily</div>
+        <div class="detail-chip">💼 Work</div>
+      </div>
+    </div>
+    <div class="detail-body">
+      <div class="detail-card">
+        <div class="detail-card-title">Notes</div>
+        <p class="detail-note">Cover sprint progress, blockers, and align on today's priorities. Bring the Q2 metrics update. Ping Sarah beforehand to confirm she has slides ready.</p>
+      </div>
+      <div class="detail-card">
+        <div class="detail-card-title">Subtasks</div>
+        <div class="subtask-item">
+          <div class="sub-check done" onclick="toggleSubtask(this)">✓</div>
+          <div class="sub-text done">Prepare talking points</div>
+        </div>
+        <div class="subtask-item">
+          <div class="sub-check" onclick="toggleSubtask(this)"></div>
+          <div class="sub-text">Share screen for demo</div>
+        </div>
+        <div class="subtask-item">
+          <div class="sub-check" onclick="toggleSubtask(this)"></div>
+          <div class="sub-text">Send follow-up notes</div>
+        </div>
+      </div>
+      <div class="detail-card">
+        <div class="detail-card-title">Notifications</div>
+        <div class="notif-row">
+          <div>
+            <div class="notif-label">Gentle Reminder</div>
+            <div class="notif-sub">15 min before · Soft chime</div>
+          </div>
+          <div class="toggle on" onclick="toggleEl(this)"></div>
+        </div>
+        <div style="border-top:1px solid var(--border);margin:10px 0;"></div>
+        <div class="notif-row">
+          <div>
+            <div class="notif-label">Smart Repeat</div>
+            <div class="notif-sub">Re-alert every 5 min if missed</div>
+          </div>
+          <div class="toggle on" onclick="toggleEl(this)"></div>
+        </div>
+      </div>
+      <div class="detail-card">
+        <div class="detail-card-title">Attachments</div>
+        <div class="attachment-row">
+          <div class="attachment">📋<span>Brief.pdf</span></div>
+          <div class="attachment">📊<span>Q2Data.xlsx</span></div>
+          <div class="attachment" style="border-style:dashed;cursor:pointer;" onclick="showToast('Attach file')">➕<span>Add</span></div>
+        </div>
+      </div>
+      <button class="complete-btn" onclick="showToast('Task marked complete! 🎉')">✅ Mark as Complete</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 7: PROGRESS -->
+  <div class="screen" id="progress-screen">
+    <div class="prog-scroll">
+      <div class="prog-header">
+        <div class="back-btn" onclick="goBack()" style="background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.3);color:#fff;margin-bottom:12px;">←</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div class="prog-title">Your Progress 🏆</div>
+            <div class="prog-sub">Keep the streak alive!</div>
+          </div>
+          <button onclick="goTo('monthly')" style="padding:9px 14px;border-radius:var(--radius-sm);border:1.5px solid rgba(255,255,255,0.35);background:rgba(255,255,255,0.15);color:#fff;font-family:var(--font-display);font-size:12px;font-weight:700;cursor:pointer;backdrop-filter:blur(6px);letter-spacing:.3px;">📅 Past Month</button>
+        </div>
+        <div class="prog-stats">
+          <div class="prog-stat">
+            <div class="stat-num">🔥 14</div>
+            <div class="stat-label">DAY STREAK</div>
+          </div>
+          <div class="prog-stat">
+            <div class="stat-num">142</div>
+            <div class="stat-label">TASKS DONE</div>
+          </div>
+          <div class="prog-stat">
+            <div class="stat-num">89%</div>
+            <div class="stat-label">COMPLETION</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="week-chart">
+        <div class="week-chart-title">This Week's Activity</div>
+        <div class="bar-row">
+          <div class="bar-wrap">
+            <div class="bar" style="height:55%"></div>
+            <div class="bar-label">SUN</div>
+          </div>
+          <div class="bar-wrap">
+            <div class="bar" style="height:80%"></div>
+            <div class="bar-label">MON</div>
+          </div>
+          <div class="bar-wrap">
+            <div class="bar" style="height:65%"></div>
+            <div class="bar-label">TUE</div>
+          </div>
+          <div class="bar-wrap">
+            <div class="bar" style="height:90%"></div>
+            <div class="bar-label">WED</div>
+          </div>
+          <div class="bar-wrap">
+            <div class="bar" style="height:40%"></div>
+            <div class="bar-label">THU</div>
+          </div>
+          <div class="bar-wrap">
+            <div class="bar" style="height:75%"></div>
+            <div class="bar-label">FRI</div>
+          </div>
+          <div class="bar-wrap">
+            <div class="bar today" style="height:70%"></div>
+            <div class="bar-label">SAT</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="goal-section" style="margin:14px 16px 0;">
+        <div class="week-chart-title" style="margin-bottom:14px;">Weekly Goals</div>
+        <div class="goal-item">
+          <div class="goal-row">
+            <div class="goal-label">Work Tasks</div>
+            <div class="goal-val">14 / 20</div>
+          </div>
+          <div class="goal-bar"><div class="goal-fill a"></div></div>
+        </div>
+        <div class="goal-item">
+          <div class="goal-row">
+            <div class="goal-label">Health Goals</div>
+            <div class="goal-val">5 / 10</div>
+          </div>
+          <div class="goal-bar"><div class="goal-fill b"></div></div>
+        </div>
+        <div class="goal-item">
+          <div class="goal-row">
+            <div class="goal-label">Personal Tasks</div>
+            <div class="goal-val">16 / 18</div>
+          </div>
+          <div class="goal-bar"><div class="goal-fill c"></div></div>
+        </div>
+      </div>
+
+      <div class="badges-section" style="margin:14px 16px 0;">
+        <div class="badges-title">Your Badges 🎖️</div>
+        <div class="badges-grid">
+          <div class="badge-item" onclick="showToast('🔥 Streak Master earned!')">
+            <div class="badge-icon">🔥</div>
+            <div class="badge-name">STREAK MASTER</div>
+          </div>
+          <div class="badge-item" onclick="showToast('⚡ Speed Runner earned!')">
+            <div class="badge-icon">⚡</div>
+            <div class="badge-name">SPEED RUNNER</div>
+          </div>
+          <div class="badge-item" onclick="showToast('🎯 100% Club earned!')">
+            <div class="badge-icon">🎯</div>
+            <div class="badge-name">100% CLUB</div>
+          </div>
+          <div class="badge-item locked">
+            <div class="badge-icon">🌟</div>
+            <div class="badge-name">SUPERSTAR</div>
+          </div>
+          <div class="badge-item" onclick="showToast('🏃 Early Bird earned!')">
+            <div class="badge-icon">🌅</div>
+            <div class="badge-name">EARLY BIRD</div>
+          </div>
+          <div class="badge-item locked">
+            <div class="badge-icon">💎</div>
+            <div class="badge-name">DIAMOND</div>
+          </div>
+          <div class="badge-item locked">
+            <div class="badge-icon">🚀</div>
+            <div class="badge-name">ROCKET</div>
+          </div>
+          <div class="badge-item" onclick="showToast('🤖 AI Friend earned!')">
+            <div class="badge-icon">🤖</div>
+            <div class="badge-name">AI FRIEND</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="bottom-nav">
+      <div class="nav-item" onclick="navTo(this,'home')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">HOME</span>
+      </div>
+      <div class="nav-item" onclick="navTo(this,'calendar')">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">CALENDAR</span>
+      </div>
+      <button class="nav-fab" onclick="goTo('add')">＋</button>
+      <div class="nav-item active" onclick="navTo(this,'progress-screen')">
+        <span class="nav-icon">🏆</span>
+        <span class="nav-label">REWARDS</span>
+      </div>
+      <div class="nav-item" onclick="navTo(this,'settings')">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">SETTINGS</span>
+      </div>
+    </nav>
+  </div>
+
+  <!-- SCREEN 8: SETTINGS -->
+  <div class="screen" id="settings">
+    <div class="set-scroll">
+      <div class="set-header">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="set-title">Settings ⚙️</div>
+          <button class="back-btn" onclick="goBack()">←</button>
+        </div>
+        <div class="set-profile">
+          <div class="set-avatar">A</div>
+          <div class="set-profile-info">
+            <p>Alex Johnson</p>
+            <p>alex@email.com · Pro Plan ✨</p>
+          </div>
+          <div style="margin-left:auto;font-size:16px;color:var(--text3);">›</div>
+        </div>
+      </div>
+
+      <div class="set-group">
+        <div class="set-group-label">Appearance</div>
+        <div class="set-card">
+          <div class="set-item" onclick="toggleDark()">
+            <div class="set-icon" style="background:rgba(108,92,231,0.1);">🌙</div>
+            <div class="set-item-info">
+              <p>Dark Mode</p>
+              <p id="themeLabel">Currently: Light</p>
+            </div>
+            <div class="toggle" id="darkToggle" onclick="event.stopPropagation();toggleDark()"></div>
+          </div>
+          <div class="set-item" onclick="showToast('Theme picker coming soon!')">
+            <div class="set-icon" style="background:rgba(253,203,110,0.15);">🎨</div>
+            <div class="set-item-info">
+              <p>Accent Color</p>
+              <p>Purple (default)</p>
+            </div>
+            <div class="set-arrow">›</div>
+          </div>
+          <div class="set-item" onclick="showToast('Font picker coming soon!')">
+            <div class="set-icon" style="background:rgba(0,206,201,0.1);">🔤</div>
+            <div class="set-item-info">
+              <p>Font Size</p>
+              <p>Medium</p>
+            </div>
+            <div class="set-arrow">›</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="set-group">
+        <div class="set-group-label">Notifications</div>
+        <div class="set-card">
+          <div class="set-item">
+            <div class="set-icon" style="background:rgba(255,118,117,0.12);">🔔</div>
+            <div class="set-item-info">
+              <p>Push Notifications</p>
+              <p>All tasks enabled</p>
+            </div>
+            <div class="toggle on" onclick="toggleEl(this)"></div>
+          </div>
+          <div class="set-item">
+            <div class="set-icon" style="background:rgba(253,203,110,0.15);">🔕</div>
+            <div class="set-item-info">
+              <p>Silent Hours</p>
+              <p>10:00 PM – 7:00 AM</p>
+            </div>
+            <div class="toggle on" onclick="toggleEl(this)"></div>
+          </div>
+          <div class="set-item" onclick="showToast('Sound picker coming soon!')">
+            <div class="set-icon" style="background:rgba(108,92,231,0.1);">🎵</div>
+            <div class="set-item-info">
+              <p>Notification Sound</p>
+              <p>Soft Chime</p>
+            </div>
+            <div class="set-arrow">›</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="set-group">
+        <div class="set-group-label">AI & Smart Features</div>
+        <div class="set-card">
+          <div class="set-item">
+            <div class="set-icon" style="background:rgba(0,206,201,0.1);">🤖</div>
+            <div class="set-item-info">
+              <p>AI Smart Suggestions</p>
+              <p>Learns your routine</p>
+            </div>
+            <div class="toggle on" onclick="toggleEl(this)"></div>
+          </div>
+          <div class="set-item">
+            <div class="set-icon" style="background:rgba(108,92,231,0.1);">🎙️</div>
+            <div class="set-item-info">
+              <p>Voice Input</p>
+              <p>Tap to speak tasks</p>
+            </div>
+            <div class="toggle on" onclick="toggleEl(this)"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="set-group">
+        <div class="set-group-label">Account</div>
+        <div class="set-card">
+          <div class="set-item" onclick="showToast('Exporting your data...')">
+            <div class="set-icon" style="background:rgba(253,203,110,0.15);">📤</div>
+            <div class="set-item-info">
+              <p>Export Data</p>
+              <p>CSV, PDF formats</p>
+            </div>
+            <div class="set-arrow">›</div>
+          </div>
+          <div class="set-item" onclick="showToast('Manage subscription')">
+            <div class="set-icon" style="background:rgba(108,92,231,0.1);">⭐</div>
+            <div class="set-item-info">
+              <p>Remindly Pro</p>
+              <p>Active — $4.99/mo</p>
+            </div>
+            <div class="set-arrow">›</div>
+          </div>
+          <div class="set-item" onclick="goTo('login')">
+            <div class="set-icon" style="background:rgba(255,118,117,0.12);">🚪</div>
+            <div class="set-item-info">
+              <p style="color:var(--high);">Sign Out</p>
+              <p>See you soon 👋</p>
+            </div>
+            <div class="set-arrow">›</div>
+          </div>
+          <div class="set-item" onclick="confirmReset()">
+            <div class="set-icon" style="background:rgba(255,118,117,0.12);">🗑️</div>
+            <div class="set-item-info">
+              <p style="color:var(--high);">Reset All Data</p>
+              <p>Clear tasks & restore defaults</p>
+            </div>
+            <div class="set-arrow">›</div>
+          </div>
+        </div>
+      </div>
+      <div style="height:10px;"></div>
+    </div>
+
+    <nav class="bottom-nav">
+      <div class="nav-item" onclick="navTo(this,'home')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">HOME</span>
+      </div>
+      <div class="nav-item" onclick="navTo(this,'calendar')">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">CALENDAR</span>
+      </div>
+      <button class="nav-fab" onclick="goTo('add')">＋</button>
+      <div class="nav-item" onclick="navTo(this,'progress-screen')">
+        <span class="nav-icon">🏆</span>
+        <span class="nav-label">REWARDS</span>
+      </div>
+      <div class="nav-item active" onclick="navTo(this,'settings')">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">SETTINGS</span>
+      </div>
+    </nav>
+  </div>
+
+  <!-- SCREEN 9: MONTHLY PROGRESS -->
+  <div class="screen" id="monthly">
+    <div class="monthly-scroll">
+      <div class="monthly-header">
+        <div class="monthly-header-top">
+          <div>
+            <div class="monthly-title">📅 Past Month</div>
+            <div class="monthly-sub">March 28 – April 28, 2026</div>
+          </div>
+          <button class="back-btn" onclick="goBack()" style="background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.3);color:#fff;">←</button>
+        </div>
+        <div class="monthly-big-stats">
+          <div class="mstat"><div class="mstat-num">284</div><div class="mstat-label">TASKS DONE</div></div>
+          <div class="mstat"><div class="mstat-num">87%</div><div class="mstat-label">COMPLETION</div></div>
+          <div class="mstat"><div class="mstat-num">🔥 14</div><div class="mstat-label">BEST STREAK</div></div>
+        </div>
+      </div>
+
+      <!-- Daily Bar Chart -->
+      <div class="month-chart-section">
+        <div class="month-chart-title">Daily Tasks Completed</div>
+        <div class="month-bar-grid" id="monthBarGrid"></div>
+      </div>
+
+      <!-- Completion Heatmap -->
+      <div class="month-heatmap">
+        <div class="heatmap-title">Activity Heatmap</div>
+        <div class="heatmap-grid" id="heatmapGrid"></div>
+        <div class="heatmap-legend">
+          Less
+          <div class="legend-cells">
+            <div class="legend-cell heat-0"></div>
+            <div class="legend-cell heat-1"></div>
+            <div class="legend-cell heat-2"></div>
+            <div class="legend-cell heat-3"></div>
+            <div class="legend-cell heat-4"></div>
+          </div>
+          More
+        </div>
+      </div>
+
+      <!-- Category Breakdown -->
+      <div class="month-category-section">
+        <div class="month-chart-title">By Category</div>
+        <div class="mcat-row">
+          <div class="mcat-icon" style="background:rgba(108,92,231,0.1);">💼</div>
+          <div class="mcat-info">
+            <div class="mcat-top"><span>Work</span><span class="mcat-val">112 tasks · 91%</span></div>
+            <div class="mcat-bar"><div class="mcat-fill" style="width:91%;background:linear-gradient(90deg,#6C5CE7,#A29BFE);"></div></div>
+          </div>
+        </div>
+        <div class="mcat-row">
+          <div class="mcat-icon" style="background:rgba(0,206,201,0.1);">🏃</div>
+          <div class="mcat-info">
+            <div class="mcat-top"><span>Health</span><span class="mcat-val">68 tasks · 79%</span></div>
+            <div class="mcat-bar"><div class="mcat-fill" style="width:79%;background:linear-gradient(90deg,#00CEC9,#00b894);"></div></div>
+          </div>
+        </div>
+        <div class="mcat-row">
+          <div class="mcat-icon" style="background:rgba(253,203,110,0.15);">🏠</div>
+          <div class="mcat-info">
+            <div class="mcat-top"><span>Personal</span><span class="mcat-val">72 tasks · 85%</span></div>
+            <div class="mcat-bar"><div class="mcat-fill" style="width:85%;background:linear-gradient(90deg,#FDCB6E,#e17055);"></div></div>
+          </div>
+        </div>
+        <div class="mcat-row">
+          <div class="mcat-icon" style="background:rgba(255,118,117,0.1);">📚</div>
+          <div class="mcat-info">
+            <div class="mcat-top"><span>Learning</span><span class="mcat-val">32 tasks · 88%</span></div>
+            <div class="mcat-bar"><div class="mcat-fill" style="width:88%;background:linear-gradient(90deg,#FF7675,#fd79a8);"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Highlights -->
+      <div class="month-summary-card">
+        <div class="month-chart-title">Month Highlights ✨</div>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="summary-item-num">7</div>
+            <div class="summary-item-label">PERFECT DAYS</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-item-num">3</div>
+            <div class="summary-item-label">BADGES EARNED</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-item-num">9.2</div>
+            <div class="summary-item-label">AVG TASKS/DAY</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-item-num">Wed</div>
+            <div class="summary-item-label">BEST DAY</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:10px;"></div>
+    </div>
+
+    <nav class="bottom-nav">
+      <div class="nav-item" onclick="navTo(this,'home')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">HOME</span>
+      </div>
+      <div class="nav-item" onclick="navTo(this,'calendar')">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">CALENDAR</span>
+      </div>
+      <button class="nav-fab" onclick="goTo('add')">＋</button>
+      <div class="nav-item active" onclick="navTo(this,'progress-screen')">
+        <span class="nav-icon">🏆</span>
+        <span class="nav-label">REWARDS</span>
+      </div>
+      <div class="nav-item" onclick="navTo(this,'settings')">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">SETTINGS</span>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Reset Confirmation Modal -->
+  <div id="resetModal" style="
+    display:none; position:absolute; inset:0; z-index:300;
+    background:rgba(0,0,0,0.5); backdrop-filter:blur(4px);
+    align-items:center; justify-content:center; padding:32px;
+  ">
+    <div style="
+      background:var(--surface); border-radius:var(--radius);
+      padding:28px 24px; box-shadow:var(--shadow); width:100%;
+      border:1.5px solid var(--border);
+    ">
+      <div style="font-size:36px;text-align:center;margin-bottom:12px;">⚠️</div>
+      <div style="font-family:var(--font-display);font-size:18px;font-weight:800;text-align:center;margin-bottom:8px;">Reset All Data?</div>
+      <div style="font-size:13px;color:var(--text2);text-align:center;margin-bottom:24px;line-height:1.5;">This will delete all your tasks and restore the default demo data. This cannot be undone.</div>
+      <div style="display:flex;gap:12px;">
+        <button onclick="closeResetModal()" style="
+          flex:1; padding:14px; border-radius:var(--radius-sm);
+          border:1.5px solid var(--border); background:var(--surface2);
+          font-family:var(--font-display); font-size:14px; font-weight:700;
+          color:var(--text2); cursor:pointer;
+        ">Cancel</button>
+        <button onclick="confirmResetConfirmed()" style="
+          flex:1; padding:14px; border-radius:var(--radius-sm);
+          border:none; background:var(--high);
+          font-family:var(--font-display); font-size:14px; font-weight:700;
+          color:#fff; cursor:pointer;
+          box-shadow:0 4px 16px rgba(255,107,107,0.35);
+        ">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  // ─── STATE ───────────────────────────────────────────────────────────────────
+  let navHistory = [];
+  let currentScreen = 'splash';
+  let isDark = false;
+  let scheduledNotifs = []; // { id, taskName, triggerTime, timerId }
+
+  // ─── DEFAULT SEED DATA ───────────────────────────────────────────────────────
+  const DEFAULT_TASKS = [
+    { id: 1, name: 'Team Standup Meeting', time: '9:00 AM', tag: 'Work',     priority: 'high', done: false },
+    { id: 2, name: 'Morning Run — 5km',    time: '7:00 AM', tag: 'Health',   priority: 'low',  done: true  },
+    { id: 3, name: 'Review Q2 Report',     time: '2:00 PM', tag: 'Work',     priority: 'med',  done: false },
+    { id: 4, name: 'Call Dr. Patel',       time: '11:00 AM',tag: 'Personal', priority: 'high', done: true  },
+    { id: 5, name: 'Grocery Shopping',     time: '5:00 PM', tag: 'Personal', priority: 'low',  done: false },
+  ];
+  const DEFAULT_NEXT_ID = 6;
+
+  // ─── PERSISTENCE HELPERS ─────────────────────────────────────────────────────
+  function saveToStorage() {
+    try {
+      localStorage.setItem('remindly_tasks', JSON.stringify(tasks));
+      localStorage.setItem('remindly_nextId', String(nextId));
+    } catch(e) {}
+  }
+
+  function loadFromStorage() {
+    try {
+      const saved = localStorage.getItem('remindly_tasks');
+      const savedId = localStorage.getItem('remindly_nextId');
+      if (saved) {
+        tasks = JSON.parse(saved);
+        nextId = savedId ? parseInt(savedId, 10) : (tasks.reduce((m,t)=>Math.max(m,t.id),0)+1);
+        return true;
+      }
+    } catch(e) {}
+    return false;
+  }
+
+  function resetAllData() {
+    tasks = DEFAULT_TASKS.map(t => ({...t}));
+    nextId = DEFAULT_NEXT_ID;
+    saveToStorage();
+    renderHome();
+    updateProgressUI();
+    showToast('🔄 Data reset to defaults!');
+  }
+
+  // Task store: load from localStorage or use seed data
+  let tasks = DEFAULT_TASKS.map(t => ({...t}));
+  let nextId = DEFAULT_NEXT_ID;
+  loadFromStorage();
+
+  // ─── NAVIGATION ──────────────────────────────────────────────────────────────
+  function goTo(id) {
+    const prev = document.getElementById(currentScreen);
+    const next = document.getElementById(id);
+    if (!next || id === currentScreen) return;
+    navHistory.push(currentScreen);
+    prev.classList.add('exit');
+    prev.classList.remove('active');
+    setTimeout(() => prev.classList.remove('exit'), 350);
+    next.classList.add('active');
+    currentScreen = id;
+    if (id === 'add') resetAddForm();
+    if (id === 'home') renderHome();
+    if (id === 'monthly') buildMonthlyCharts();
+  }
+
+  function goBack() {
+    if (navHistory.length === 0) return;
+    const prev = document.getElementById(currentScreen);
+    const id = navHistory.pop();
+    const next = document.getElementById(id);
+    prev.classList.remove('active');
+    next.style.transform = 'translateX(-40px)';
+    next.classList.add('active');
+    setTimeout(() => { next.style.transform = ''; }, 10);
+    currentScreen = id;
+    if (id === 'home') renderHome();
+  }
+
+  function navTo(el, screenId) {
+    const nav = el.closest('.bottom-nav');
+    nav.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+    goTo(screenId);
+  }
+
+  // ─── PROGRESS SYNC ───────────────────────────────────────────────────────────
+  function getProgress() {
+    const total = tasks.length;
+    const done  = tasks.filter(t => t.done).length;
+    const pct   = total === 0 ? 0 : Math.round((done / total) * 100);
+    return { total, done, pct };
+  }
+
+  function updateProgressUI() {
+    const { total, done, pct } = getProgress();
+    const circumference = 2 * Math.PI * 24; // r=24 → 150.8
+
+    // Home ring
+    const fill = document.querySelector('#home .fill');
+    if (fill) {
+      const offset = circumference - (pct / 100) * circumference;
+      fill.style.strokeDasharray  = circumference;
+      fill.style.strokeDashoffset = offset;
+    }
+    const ringCenter = document.querySelector('#home .ring-center');
+    if (ringCenter) ringCenter.textContent = pct + '%';
+
+    const progInfo = document.querySelector('#home .progress-info p:last-child');
+    if (progInfo) progInfo.textContent = `${done} of ${total} tasks done`;
+
+    // Progress screen stats (tasks done count)
+    const statNums = document.querySelectorAll('#progress-screen .stat-num');
+    if (statNums[1]) statNums[1].textContent = done + (tasks.length > 5 ? tasks.length - 5 : 0) + 142 - 5; // running total
+  }
+
+  // ─── HOME TASK RENDERING ─────────────────────────────────────────────────────
+  function renderHome() {
+    const container = document.getElementById('taskList');
+    if (!container) return;
+    container.innerHTML = tasks.map(t => `
+      <div class="task-card ${t.done ? 'done' : ''}" data-id="${t.id}" onclick="if(event.target.tagName!=='BUTTON')goTo('detail')">
+        <div class="task-card-accent ${t.priority}"></div>
+        <div class="priority-dot ${t.priority}"></div>
+        <div class="task-info">
+          <div class="task-name">${t.name}</div>
+          <div class="task-meta">
+            <span class="task-time">⏰ ${t.time}</span>
+            <span class="task-tag">${t.tag}</span>
+          </div>
+        </div>
+        <button class="check-btn" onclick="toggleTask(this,event)">${t.done ? '✓' : ''}</button>
+      </div>
+    `).join('');
+    updateProgressUI();
+  }
+
+  // ─── TASK TOGGLE ─────────────────────────────────────────────────────────────
+  function toggleTask(btn, e) {
+    e.stopPropagation();
+    const card = btn.closest('.task-card');
+    const id = parseInt(card.dataset.id);
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    task.done = !task.done;
+    card.classList.toggle('done', task.done);
+    btn.textContent = task.done ? '✓' : '';
+    if (task.done) showToast('Task completed! +10 pts 🎉');
+    saveToStorage();
+    updateProgressUI();
+  }
+
+  // ─── ADD TASK FORM ───────────────────────────────────────────────────────────
+  function resetAddForm() {
+    const inp = document.getElementById('newTaskName');
+    if (inp) inp.value = '';
+    const timeInp = document.getElementById('newTaskTime');
+    if (timeInp) timeInp.value = '';
+    const tagSel = document.getElementById('newTaskTag');
+    if (tagSel) tagSel.value = 'Work';
+    // Reset priority pills
+    document.querySelectorAll('#add .priority-pill').forEach((p,i) => {
+      p.classList.remove('active','high','med','low');
+      if (i===0) p.classList.add('active','high');
+    });
+    // Reset notification toggles to default
+    document.querySelectorAll('#add .notif-toggle').forEach((t,i) => {
+      t.classList.toggle('on', i === 0); // first one on by default
+    });
+    // Reset repeat chips
+    document.querySelectorAll('#add .repeat-chip').forEach((c,i) => {
+      c.classList.toggle('active', i === 0);
+    });
+  }
+
+  function getSelectedPriority() {
+    const active = document.querySelector('#add .priority-pill.active');
+    if (!active) return 'med';
+    return active.classList.contains('high') ? 'high' : active.classList.contains('low') ? 'low' : 'med';
+  }
+
+  function saveTask() {
+    const nameEl  = document.getElementById('newTaskName');
+    const timeEl  = document.getElementById('newTaskTime');
+    const tagEl   = document.getElementById('newTaskTag');
+    const name    = nameEl ? nameEl.value.trim() : '';
+    const time    = timeEl ? timeEl.value.trim() : '';
+    const tag     = tagEl  ? tagEl.value : 'Work';
+    const priority = getSelectedPriority();
+
+    if (!name) {
+      showToast('⚠️ Please enter a task name');
+      if (nameEl) nameEl.focus();
+      return;
+    }
+
+    const displayTime = time
+      ? formatTime12h(time)
+      : 'No time set';
+
+    const newTask = { id: nextId++, name, time: displayTime, tag, priority, done: false };
+    tasks.push(newTask);
+    saveToStorage();
+
+    // Schedule notification if time was set and notifications enabled
+    const notifOn = document.querySelector('#add .notif-toggle.on');
+    if (time && notifOn) {
+      scheduleNotification(newTask, time);
+    }
+
+    showToast(`Task saved! 🎯 "${name}" added`);
+    setTimeout(() => goTo('home'), 800);
+  }
+
+  function formatTime12h(val) {
+    if (!val) return '';
+    const [h, m] = val.split(':').map(Number);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12  = h % 12 || 12;
+    return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+  }
+
+  // ─── NOTIFICATIONS ───────────────────────────────────────────────────────────
+  async function requestNotifPermission() {
+    if (!('Notification' in window)) return false;
+    if (Notification.permission === 'granted') return true;
+    if (Notification.permission === 'denied') return false;
+    const perm = await Notification.requestPermission();
+    return perm === 'granted';
+  }
+
+  function scheduleNotification(task, timeVal, minutesBefore = 15) {
+    if (!('Notification' in window)) {
+      showToast('🔔 Reminder set for ' + task.name);
+      return;
+    }
+
+    const now  = new Date();
+    const [h, m] = timeVal.split(':').map(Number);
+    const trigger = new Date(now);
+    trigger.setHours(h, m, 0, 0);
+    trigger.setMinutes(trigger.getMinutes() - minutesBefore);
+
+    // If trigger is in the past, try tomorrow
+    if (trigger <= now) trigger.setDate(trigger.getDate() + 1);
+
+    const delay = trigger - now;
+
+    requestNotifPermission().then(granted => {
+      if (granted) {
+        const timerId = setTimeout(() => {
+          new Notification('⏰ Remindly', {
+            body: `"${task.name}" starts in ${minutesBefore} minutes!`,
+            icon: '🔔',
+            tag: 'remindly-' + task.id
+          });
+        }, delay);
+        scheduledNotifs.push({ id: task.id, taskName: task.name, triggerTime: trigger, timerId });
+        const mins = Math.round(delay / 60000);
+        showToast(`🔔 Reminder set — ${mins < 60 ? mins + ' min' : Math.round(mins/60) + 'h'} from now`);
+      } else {
+        // Fallback: in-app toast reminder
+        const timerId = setTimeout(() => {
+          showToast(`⏰ Reminder: "${task.name}" in ${minutesBefore} min!`);
+        }, delay);
+        scheduledNotifs.push({ id: task.id, taskName: task.name, triggerTime: trigger, timerId });
+        showToast('🔔 In-app reminder set for ' + task.name);
+      }
+    });
+  }
+
+  // ─── MISC HELPERS ────────────────────────────────────────────────────────────
+  function setPriority(el, level) {
+    el.closest('.priority-row').querySelectorAll('.priority-pill').forEach(p => p.classList.remove('active','high','med','low'));
+    el.classList.add('active', level);
+  }
+
+  function setRepeat(el) {
+    el.closest('.repeat-row').querySelectorAll('.repeat-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function toggleEl(el) { el.classList.toggle('on'); }
+
+  function toggleSubtask(el) {
+    el.classList.toggle('done');
+    el.textContent = el.classList.contains('done') ? '✓' : '';
+    el.nextElementSibling.classList.toggle('done');
+  }
+
+  function toggleView(el) {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    showToast(el.textContent + ' view');
+  }
+
+  let voiceActive = false;
+  let voiceTimer = null;
+  function toggleVoice() {
+    const btn = document.getElementById('voiceBtn');
+    const txt = document.getElementById('voiceBtnText');
+    voiceActive = !voiceActive;
+    if (voiceActive) {
+      btn.classList.add('listening');
+      txt.textContent = '🔴 Listening… speak now';
+      voiceTimer = setTimeout(() => {
+        btn.classList.remove('listening');
+        const nameEl = document.getElementById('newTaskName');
+        const suggested = 'Review Q2 report at 2pm';
+        txt.textContent = '✅ Got it: "' + suggested + '"';
+        if (nameEl && !nameEl.value) nameEl.value = 'Review Q2 report';
+        voiceActive = false;
+      }, 2500);
+    } else {
+      clearTimeout(voiceTimer);
+      btn.classList.remove('listening');
+      txt.textContent = 'Tap to speak your task';
+    }
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function toggleDark() {
+    isDark = !isDark;
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : '');
+    document.getElementById('themeLabel').textContent = 'Currently: ' + (isDark ? 'Dark' : 'Light');
+    document.getElementById('darkToggle').classList.toggle('on', isDark);
+    showToast(isDark ? '🌙 Dark mode on' : '☀️ Light mode on');
+  }
+
+  // ─── QUICK ADD (home screen inline) ─────────────────────────────────────────
+  function setQuickPriority(el, level) {
+    el.closest('.quick-priority-row').querySelectorAll('.quick-p-chip')
+      .forEach(c => c.classList.remove('active','high','med','low'));
+    el.classList.add('active', level);
+  }
+
+  function getQuickPriority() {
+    const a = document.querySelector('.quick-p-chip.active');
+    if (!a) return 'med';
+    return a.classList.contains('high') ? 'high' : a.classList.contains('low') ? 'low' : 'med';
+  }
+
+  function closeQuickAdd() {
+    const inp = document.getElementById('quickTaskInput');
+    const opts = document.getElementById('quickAddOptions');
+    if (inp) inp.value = '';
+    if (opts) opts.style.display = 'none';
+    inp && inp.blur();
+  }
+
+  function quickAddTask() {
+    const inp   = document.getElementById('quickTaskInput');
+    const timeI = document.getElementById('quickTaskTime');
+    const tagS  = document.getElementById('quickTaskTag');
+    const name  = inp ? inp.value.trim() : '';
+    if (!name) { showToast('⚠️ Enter a task name first'); inp && inp.focus(); return; }
+
+    const time = timeI && timeI.value ? formatTime12h(timeI.value) : 'No time set';
+    const tag  = tagS ? tagS.value : 'Work';
+    const priority = getQuickPriority();
+
+    tasks.push({ id: nextId++, name, time, tag, priority, done: false });
+    saveToStorage();
+    closeQuickAdd();
+    renderHome();
+    showToast(`✅ "${name}" added!`);
+  }
+
+  function confirmReset() {
+    const modal = document.getElementById('resetModal');
+    modal.style.display = 'flex';
+  }
+
+  function closeResetModal() {
+    const modal = document.getElementById('resetModal');
+    modal.style.display = 'none';
+  }
+
+  function confirmResetConfirmed() {
+    closeResetModal();
+    resetAllData();
+  }
+
+  // ─── CALENDAR ────────────────────────────────────────────────────────────────
+  function buildCalendar() {
+    const grid = document.getElementById('calGrid');
+    if (!grid) return;
+    const today = 28;
+    const startDay = 3;
+    const days = 30;
+    let html = '';
+    for (let i = 0; i < startDay; i++) {
+      html += `<div class="cal-day other-month">${31 - startDay + i + 1}</div>`;
+    }
+    for (let d = 1; d <= days; d++) {
+      const isToday = d === today;
+      const hasTasks = [3,7,10,14,17,21,25,28].includes(d);
+      html += `<div class="cal-day ${isToday?'today':''}" onclick="selectDay(this,${d})">
+        ${d}${hasTasks && !isToday ? '<div class="day-dot"></div>' : ''}
+      </div>`;
+    }
+    const remaining = (7 - ((startDay + days) % 7)) % 7;
+    for (let d = 1; d <= remaining; d++) html += `<div class="cal-day other-month">${d}</div>`;
+    grid.innerHTML = html;
+  }
+
+  function selectDay(el, d) {
+    document.querySelectorAll('.cal-day').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    showToast(`April ${d} selected`);
+  }
+
+  // ─── LOGIN ───────────────────────────────────────────────────────────────────
+  let currentUserName = 'Alex';
+
+  function doLogin() {
+    const nameEl = document.getElementById('loginName');
+    const name = nameEl && nameEl.value.trim();
+    if (!name) { showToast('⚠️ Please enter your name'); nameEl && nameEl.focus(); return; }
+    currentUserName = name;
+    // Update greeting & avatar/settings wherever name appears
+    document.querySelectorAll('.greeting span').forEach(el => el.textContent = name);
+    document.querySelectorAll('.avatar').forEach(el => el.textContent = name[0].toUpperCase());
+    document.querySelectorAll('.set-avatar').forEach(el => el.textContent = name[0].toUpperCase());
+    document.querySelectorAll('#settings .set-profile-info p:first-child').forEach(el => el.textContent = name);
+    goTo('home');
+  }
+
+  // ─── MONTHLY CHART BUILD ─────────────────────────────────────────────────────
+  function buildMonthlyCharts() {
+    // 30-day bar chart (last 30 days, 7 bars per row = 4 weeks + a few)
+    const barGrid = document.getElementById('monthBarGrid');
+    if (barGrid && !barGrid.dataset.built) {
+      barGrid.dataset.built = '1';
+      const vals = [6,9,4,11,8,7,10,5,12,9,8,6,11,10,7,9,4,8,13,10,9,6,11,8,10,7,9,12,8,10];
+      const max = Math.max(...vals);
+      const days = ['S','M','T','W','T','F','S'];
+      barGrid.innerHTML = vals.map((v,i) => {
+        const pct = Math.round((v/max)*100);
+        const isToday = i === vals.length - 1;
+        return `<div class="mbar-col">
+          <div class="mbar${isToday?' highlight':''}" style="height:${pct}%;"></div>
+          <div class="mbar-lbl">${days[i%7]}</div>
+        </div>`;
+      }).join('');
+    }
+    // Heatmap — 35 cells (5 weeks)
+    const hGrid = document.getElementById('heatmapGrid');
+    if (hGrid && !hGrid.dataset.built) {
+      hGrid.dataset.built = '1';
+      const levels = [0,0,1,2,3,4,3,2,1,2,3,4,4,3,2,1,0,2,3,4,3,2,1,2,3,3,4,4,3,2,1,2,3,4,4];
+      hGrid.innerHTML = levels.map((l,i) =>
+        `<div class="heat-cell heat-${l}" onclick="showToast('Day ${i+1}: ${[0,2,5,8,11][l]||0}+ tasks')"></div>`
+      ).join('');
+    }
+  }
+
+
+  buildCalendar();
+  buildMonthlyCharts();
+  renderHome();
+  updateProgressUI();
+</script>
+</body>
+</html>
